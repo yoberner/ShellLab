@@ -1,7 +1,7 @@
  /*
  * tsh - A tiny shell program with job control
  * 
- * <Seth Jacobs 800293004  Yonatan Berner 800>
+ * <Seth Jacobs 800293004, Yonatan Berner 800491845>
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
  * background children don't receive SIGINT (SIGTSTP) from the kernel
  * when we type ctrl-c (ctrl-z) at the keyboard.  
 */
-void eval(char *cmdline) 
+void eval(char *cmdline)
 {
     char *argv[MAXARGS];
     int bg=parseline(cmdline, argv);
