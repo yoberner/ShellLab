@@ -1,4 +1,4 @@
-/* 
+ /*
  * tsh - A tiny shell program with job control
  * 
  * <Seth Jacobs 800293004  Yonatan Berner 800>
@@ -42,7 +42,7 @@ int verbose = 0;            /* if true, print additional output */
 int nextjid = 1;            /* next job ID to allocate */
 char sbuf[MAXLINE];         /* for composing sprintf messages */
 
-struct job_t {              /* The job struct */
+struct job_t {              /* The job struct    keeps rack of all the jobs running */
     pid_t pid;              /* job PID */
     int jid;                /* job ID [1, 2, ...] */
     int state;              /* UNDEF, BG, FG, or ST */
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 	    printf("%s", prompt);
 	    fflush(stdout);
 	}
-	if ((fgets(cmdline, MAXLINE, stdin) == NULL) && ferror(stdin))
+	if ((fgets(cmdline, MAXLINE, stdin) == NULL) && ferror(stdin)) //read command line
 	    app_error("fgets error");
 	if (feof(stdin)) { /* End of file (ctrl-d) */
 	    fflush(stdout);
@@ -165,6 +165,10 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline) 
 {
+    char *argv[MAXARGS];
+    int bg=parseline(cmdline, argv);
+    if(strcmp(argv[0],"quit")==0)
+        exit(0);
     return;
 }
 
@@ -172,7 +176,7 @@ void eval(char *cmdline)
  * parseline - Parse the command line and build the argv array.
  * 
  * Characters enclosed in single quotes are treated as a single
- * argument.  Return true if the user has requested a BG job, false if
+ * argument.  Return true 1 if the user has requested a BG job, false 0 if
  * the user has requested a FG job.  
  */
 int parseline(const char *cmdline, char **argv) 
