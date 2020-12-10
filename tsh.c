@@ -165,28 +165,51 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline)
 {
-    char *argv[MAXARGS];
-    int bg=parseline(cmdline, argv);
+    char *argv[MAXARGS]; /* Argument list execve() */
+    char buf[MAXLINE]; /* Holds modified command line */
+    strcpy(buf, cmdline);
+    int bg = parseline(buf, argv); /* = parseline(commandline, argv);  Should the job runinbgorfg?*/
+    pid_t pid; /* Process id */
+    
+    
+
+    if (argv[0] == NULL)
+    {
+        return;   /* Ignore empty lines */
+    }
+
+
     if(!builtin_cmd(argv))
     {
-        if(fork()==0)
+        if((pid = fork()) == 0) /* Child runs user job */
         {
-            execvp(argv[0], argv);
-            exit(0);
+            
+            
+            if (execve(argv[0], argv, environ) < 0) {
+                printf("%s: Command not found.\n", argv[0]); 
+                exit(0);
+            }
+            //execvp(argv[0], argv);
+            //exit(0);
+        
         }
+        /* Parent waits for foreground job to terminate */
+        
         if(!bg)
         {
-            wait(NULL);
+            addjob(jobs, pid, FG, cmdline);
+            waitfg(pid);
+            //wait(NULL);
+           // deletejob(jobs, pid);
         }
         else
         {
-            {
-                //printf("[%d] (%d) %s\n", )
-            }
+            
+            addjob(jobs, pid, BG, cmdline);
+            printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
         }
-        
+    
     }
-
     return;
 }
 
@@ -249,13 +272,18 @@ int parseline(const char *cmdline, char **argv)
 
 /* 
  * builtin_cmd - If the user has typed a built-in command then execute
- *    it immediately.  
+ * it immediately.
+ * If first arg is a builtin command, run it and return true
  */
 int builtin_cmd(char **argv) 
 {
     if(strcmp(argv[0],"quit")==0)
     {
         exit(0);
+    }
+    if (strcmp(argv[0], "&")==0) /* Ignore singleton & */
+    {
+        return 1;
     }
     else if(strcmp(argv[0], "fg")==0)
     {
@@ -287,6 +315,18 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
+    while(1)
+    {
+        if(pid!=fgpid(jobs))
+        {
+            break;
+        }
+        else
+        {
+            sleep(1);    
+        }
+        
+    }
     return;
 }
 
@@ -303,6 +343,28 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig) 
 {
+    int status;
+    pid_t pid;
+
+    while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0 ) {
+
+        if (WIFEXITED(status)) {   /*checks if child terminated normally */
+            deletejob(jobs, pid);
+        }
+
+        if (WIFSIGNALED(status)) {  /*checks if child was terminated by a signal that was not caught */
+            printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, WTERMSIG(status));
+            deletejob(jobs,pid);
+        }
+
+        if (WIFSTOPPED(status)) {     /*checks if child process that caused return is currently stopped */
+            getjobpid(jobs, pid)->state = ST;
+            printf("Job [%d] (%d) stopped by signal %d\n", pid2jid(pid), pid, WTERMSIG(status));
+            //printf("[%d] Stopped %s\n", pid2jid(pid), jobs->cmdline);
+        }
+
+    }
+
     return;
 }
 
