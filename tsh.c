@@ -190,7 +190,7 @@ void eval(char *cmdline)
             
             setpgid(0, 0);
             if (execve(argv[0], argv, environ) < 0) {
-                printf("%s: Command not found.\n", argv[0]); 
+                printf("%s: Command not found\n", argv[0]); 
                 exit(0);
             }
             //execvp(argv[0], argv);
@@ -334,12 +334,19 @@ void do_bgfg(char **argv)
     
     if(argv[1]==NULL)
     {
-        printf("need more line 337");
+        if(argv[0]=="fg")
+        {
+            printf("%s command requires PID or %%jobid argument\n", argv[0]);
+        }
+        else
+        {
+            printf("%s command requires PID or %%jobid argument\n", argv[0]);
+        } 
         return;
     }
     if(!isdigit(argv[1][0]) && argv[1][0] != '%')
     {
-        printf("is an eror fix it ya chup  342");
+        printf("%s: argument must be a PID or %%jobid\n", argv[0]);
         return;
     }
     if(strcmp("fg", argv[0])==0)
@@ -352,7 +359,7 @@ void do_bgfg(char **argv)
             job = getjobjid(jobs, theIntVersion);
             if(job==NULL)
             {
-                printf("chupppp line 355");
+                printf("%%%s: No such job\n", jid);
                 return;
             }
             job->state=FG;
@@ -364,7 +371,7 @@ void do_bgfg(char **argv)
             job=getjobpid(jobs, atoi(argv[1]));
             if(job==NULL)
             {
-                printf("line 366 classic chup move");
+                printf("(%s): No such process\n", argv[1]);
                 return;
             }
             job->state=FG;
@@ -383,7 +390,7 @@ void do_bgfg(char **argv)
             job = getjobjid(jobs, theIntVersion);
             if(job==NULL)
             {
-                printf("thats another eror come on chup  387");
+                printf("%%%s: No such job\n", jid);
                 return;
             }
             job->state=BG;
@@ -395,7 +402,7 @@ void do_bgfg(char **argv)
             job=getjobpid(jobs, atoi(argv[1]));
             if(job==NULL)
             {
-                printf("you did a chupy again 399");
+                printf("(%s): No such process\n", argv[1]);
                 return;
             }
             job->state=BG;
@@ -495,7 +502,7 @@ void sigtstp_handler(int sig)
 
     if(pid!=0)
    {
-        printf("Job [%d] (%d) Stopped by signal %d\n", jid, pid, sig);
+        printf("Job [%d] (%d) stopped by signal %d\n", jid, pid, sig);
         getjobpid(jobs, pid)->state=ST;
         kill(-pid, sig);
     }
