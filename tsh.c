@@ -103,13 +103,13 @@ int main(int argc, char **argv)
         switch (c) {
         case 'h':             /* print help message */
             usage();
-	    break;
+	        break;
         case 'v':             /* emit additional diagnostic info */
             verbose = 1;
-	    break;
+	        break;
         case 'p':             /* don't print a prompt */
             emit_prompt = 0;  /* handy for automatic testing */
-	    break;
+	        break;
 	    default:
             usage();
 	    }
@@ -197,6 +197,11 @@ void eval(char *cmdline)
             //exit(0);
         
         }
+        else
+        {
+            setpgid(0, 0);     
+        }
+        
         /* Parent waits for foreground job to terminate */
         if(!bg)
         {
@@ -206,26 +211,31 @@ void eval(char *cmdline)
             //waitfg(pid);
             //wait(NULL);
             //deletejob(jobs, pid);
+            (sigprocmask(SIG_UNBLOCK, &mask, NULL));
+            waitfg(pid);
         }
         else
         {
             
             addjob(jobs, pid, BG, cmdline);
            // printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
-           // sigprocmask(SIG_UNBLOCK, &mask, NULL);
+            sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
+           printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
+
         }
-        if(sigprocmask(SIG_UNBLOCK, &mask, NULL)!=0)
-        {
-            unix_error("eror line 219");
-        }
-        if(!bg)
-        {
-            waitfg(pid);
-        }
-        else
-        {
-            printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
-        }
+        //if(sigprocmask(SIG_UNBLOCK, &mask, NULL)!=0)
+        //{
+        //    unix_error("eror line 219");
+        //}
+        //if(!bg)
+        //{
+         //   waitfg(pid);
+        //}
+        //else
+        //{
+          //  printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
+       // }
         
     
     }
@@ -334,14 +344,7 @@ void do_bgfg(char **argv)
     
     if(argv[1]==NULL)
     {
-        if(argv[0]=="fg")
-        {
-            printf("%s command requires PID or %%jobid argument\n", argv[0]);
-        }
-        else
-        {
-            printf("%s command requires PID or %%jobid argument\n", argv[0]);
-        } 
+        printf("%s command requires PID or %%jobid argument\n", argv[0]);
         return;
     }
     if(!isdigit(argv[1][0]) && argv[1][0] != '%')
@@ -427,7 +430,7 @@ void waitfg(pid_t pid)
         else
         {
             sleep(1);    
-        }
+       }
     }
     return;
 }
@@ -464,8 +467,6 @@ void sigchld_handler(int sig)
             printf("Job [%d] (%d) stopped by signal %d\n", pid2jid(pid), pid, WTERMSIG(status));
            // printf("[%d] Stopped %s\n", pid2jid(pid), jobs->cmdline);
         }
-
-
     }
 
     return;
