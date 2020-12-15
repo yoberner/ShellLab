@@ -194,10 +194,10 @@ void eval(char *cmdline)
             //exit(0);
 
         }
-        else
-        {
-            setpgid(0, 0);
-        }
+        // else
+        // {
+        //     setpgid(0, 0);
+        // }
 
         /* Parent waits for foreground job to terminate */
         if(!bg)
@@ -452,12 +452,12 @@ void sigchld_handler(int sig)
             deletejob(jobs, pid);
         }
 
-        if (WIFSIGNALED(status)) {  /*checks if child was terminated by a signal that was not caught */
+        else if (WIFSIGNALED(status)) {  /*checks if child was terminated by a signal that was not caught */
             printf("Job [%d] (%d) terminated by signal 2\n", pid2jid(pid), pid);
             deletejob(jobs,pid);
         }
 
-        if (WIFSTOPPED(status)) {     /*checks if child process that caused return is currently stopped */
+        else if (WIFSTOPPED(status)) {     /*checks if child process that caused return is currently stopped */
             printf("Job [%d] (%d) stopped by signal 20\n", pid2jid(pid), pid);
             getjobpid(jobs, pid)->state = ST;
            // printf("[%d] Stopped %s\n", pid2jid(pid), jobs->cmdline);
@@ -478,7 +478,7 @@ void sigint_handler(int sig)
 
     if(pid !=0)
     {
-        kill(-pid, sig);
+        kill(-pid, sig); //kills all the sigs of all the children
     }
 
     return;
@@ -498,7 +498,7 @@ void sigtstp_handler(int sig)
    {
         //printf("Job [%d] (%d) stopped by signal %d\n", jid, pid, sig);
         //getjobpid(jobs, pid)->state=ST;
-        kill(-pid, sig);
+        kill(-pid, sig); //stops all child processes of given pid
     }
 
     return;
