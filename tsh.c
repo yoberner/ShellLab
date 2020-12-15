@@ -177,37 +177,27 @@ void eval(char *cmdline)
         return;   /* Ignore empty lines */
     }
 
-    if(!builtin_cmd(argv))
+    if(!builtin_cmd(argv)) //check if any of the builtin commands to run imideatly if not continues
     {
         sigemptyset(&mask);
         sigaddset(&mask, SIGCHLD);
         sigprocmask(SIG_BLOCK, &mask, NULL);
-        if((pid = fork()) == 0) /* Child runs user job */
+        if((pid = fork()) == 0)  //forks a child to run job
         {
 
             setpgid(0, 0);
             if (execve(argv[0], argv, environ) < 0) {
-                printf("%s: Command not found\n", argv[0]);
+                printf("%s: Command not found\n", argv[0]); //not a real command 
                 exit(0);
             }
-            //execvp(argv[0], argv);
-            //exit(0);
-
+            
         }
-        // else
-        // {
-        //     setpgid(0, 0);
-        // }
 
-        /* Parent waits for foreground job to terminate */
-        if(!bg)
+
+       
+        if(!bg) // then is an FG
         {
-            addjob(jobs, pid, FG, cmdline);
-           // printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
-            //sigprocmask(SIG_UNBLOCK, &mask, NULL);
-            //waitfg(pid);
-            //wait(NULL);
-            //deletejob(jobs, pid);
+            addjob(jobs, pid, FG, cmdline); //put job in list 
             sigprocmask(SIG_UNBLOCK, &mask, NULL);
             waitfg(pid);
         }
@@ -215,23 +205,11 @@ void eval(char *cmdline)
         {
 
             addjob(jobs, pid, BG, cmdline);
-            //printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
+            
             sigprocmask(SIG_UNBLOCK, &mask, NULL);
             printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
 
         }
-    //     if(sigprocmask(SIG_UNBLOCK, &mask, NULL)!=0)
-    //     {
-    //        unix_error("eror line 219");
-    //     }
-    //     if(!bg)
-    //     {
-    //        waitfg(pid);
-    //     }
-    //     else
-    //     {
-    //        printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
-    //    }
 
     }
     return;
@@ -334,7 +312,7 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv)
 {
-    struct job_t* job=NULL; //does * here matter where?
+    struct job_t* job=NULL; 
     char *jid = argv[1];
 
     if(argv[1]==NULL)
@@ -347,20 +325,20 @@ void do_bgfg(char **argv)
         printf("%s: argument must be a PID or %%jobid\n", argv[0]);
         return;
     }
-    if(strcmp("fg", argv[0])==0)
+    if(strcmp("fg", argv[0])==0) //if running an fg
     {
         if(argv[1][0]=='%')
         {
             jid += 1;
 
-            int theIntVersion=atoi(jid);
-            job = getjobjid(jobs, theIntVersion);
-            if(job==NULL)
+            int theIntVersion=atoi(jid); //convert the jid to an int 
+            job = getjobjid(jobs, theIntVersion); //find the job from jid
+            if(job==NULL) //if cant find the job 
             {
                 printf("%%%s: No such job\n", jid);
                 return;
             }
-            job->state=FG;
+            job->state=FG;  //othersie change state of job to foreground 
             kill(-(job->pid), SIGCONT);
             waitfg(job->pid);
         }
@@ -378,20 +356,20 @@ void do_bgfg(char **argv)
         }
 
     }
-    else if(strcmp("bg", argv[0])==0)
+    else if(strcmp("bg", argv[0])==0) //dealing with background now 
     {
         if(argv[1][0]=='%')
         {
             jid += 1;
 
             int theIntVersion=atoi(jid);
-            job = getjobjid(jobs, theIntVersion);
-            if(job==NULL)
+            job = getjobjid(jobs, theIntVersion); //find the job
+            if(job==NULL) //check if job exists 
             {
                 printf("%%%s: No such job\n", jid);
                 return;
             }
-            job->state=BG;
+            job->state=BG; //change the state of jonb to background 
             printf("[%d] (%d) %s",job->jid, job->pid, job->cmdline);
             kill(-(job->pid), SIGCONT);
         }
@@ -414,9 +392,9 @@ void do_bgfg(char **argv)
 /*
  * waitfg - Block until process pid is no longer the foreground process
  */
-void waitfg(pid_t pid)
+void waitfg(pid_t pid) 
 {
-    while(1)
+    while(1) //loop around the sleep function 
     {
         if(pid!=fgpid(jobs))
         {
