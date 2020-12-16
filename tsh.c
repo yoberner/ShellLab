@@ -428,20 +428,20 @@ void sigchld_handler(int sig)
     //or with a return value equal to the PID of one of the stopped or terminated children.
     while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0 ) {
 
-        //checks if child terminated normally.
+        //checks if child stops regular.
         //Textbook: Returns true if the child terminated normally, via a call to exit or a return.
         if (WIFEXITED(status)) {
             deletejob(jobs, pid);
         }
 
-        //checks if child was terminated by a signal that was not caught.
+        //checks if child stops by uncaught signal.
         //Textbook: Returns true if the child process terminated because of a signal that was not caught.
         else if (WIFSIGNALED(status)) {
             printf("Job [%d] (%d) terminated by signal 2\n", pid2jid(pid), pid);
             deletejob(jobs,pid);
         }
 
-        //checks if child process that caused return is currently stopped.
+        //checks if returned child process ended.
         //Textbook: Returns true if the child that caused the return is currently stopped.
         else if (WIFSTOPPED(status)) {
             printf("Job [%d] (%d) stopped by signal 20\n", pid2jid(pid), pid);
