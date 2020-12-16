@@ -424,18 +424,26 @@ void sigchld_handler(int sig)
     int status;
     pid_t pid;
 
+    //Textbook: WNOHANG | WUNTRACED: Return immediately, with a return value of 0, if none of the children in the wait set has stopped or terminated,
+    //or with a return value equal to the PID of one of the stopped or terminated children.
     while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0 ) {
 
-        if (WIFEXITED(status)) {   /*checks if child terminated normally */
+        //checks if child terminated normally.
+        //Textbook: Returns true if the child terminated normally, via a call to exit or a return.
+        if (WIFEXITED(status)) {
             deletejob(jobs, pid);
         }
 
-        else if (WIFSIGNALED(status)) {  /*checks if child was terminated by a signal that was not caught */
+        //checks if child was terminated by a signal that was not caught.
+        //Textbook: Returns true if the child process terminated because of a signal that was not caught.
+        else if (WIFSIGNALED(status)) {
             printf("Job [%d] (%d) terminated by signal 2\n", pid2jid(pid), pid);
             deletejob(jobs,pid);
         }
 
-        else if (WIFSTOPPED(status)) {     /*checks if child process that caused return is currently stopped */
+        //checks if child process that caused return is currently stopped.
+        //Textbook: Returns true if the child that caused the return is currently stopped.
+        else if (WIFSTOPPED(status)) {
             printf("Job [%d] (%d) stopped by signal 20\n", pid2jid(pid), pid);
             getjobpid(jobs, pid)->state = ST;
            // printf("[%d] Stopped %s\n", pid2jid(pid), jobs->cmdline);
